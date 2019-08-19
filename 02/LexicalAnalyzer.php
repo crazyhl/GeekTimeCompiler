@@ -5,9 +5,6 @@
  */
 
 
-
-
-
 class DfaState
 {
     const Initial = 'Initial'; // 初始化状态，初始状态进入这个状态 或者 当一个状态结束之后进入这个状态
@@ -15,6 +12,15 @@ class DfaState
     const GT = 'GT'; // 大于号
     const GE = 'GE'; // 大于等于
     const IntLiteral = 'IntLiteral'; // 数值
+    const Id_int1 = 'Id_int1'; // int 状态1
+    const Id_int2 = 'Id_int2'; // int 状态2
+    const Id_int3 = 'Id_int3'; // int 状态3
+    const INT = 'int'; // int 保留字
+    const EQ = 'EQ';
+    const PLUS = '+';
+    const MINUS = '-';
+    const STAR = '*';
+    const SLASH = '/';
 }
 
 class Token
@@ -43,7 +49,20 @@ function isEq($ch)
     return $ch == '=';
 }
 
-$str = 'age >= 45';
+function saveToken($tokenArr, $type, $value)
+{
+    $token = new Token();
+    $token->type = $type;
+    $token->value = $value;
+    $tokenArr[] = $token;
+
+    return $tokenArr;
+}
+
+$str = 'age>=45';
+$str = 'int age = 40';
+$str = 'intA = 10';
+$str = '2+3*5';
 
 $chars = str_split($str);
 $type = DfaState::Initial;
@@ -82,23 +101,58 @@ foreach ($chars as $ch) {
             }
             break;
         case DfaState::GE: // 到这个类型之后就只会直接结束进入初始化状态了
+        case DfaState::EQ: // 到这个类型之后就只会直接结束进入初始化状态了
+        case DfaState::PLUS: // 到这个类型之后就只会直接结束进入初始化状态了
+        case DfaState::MINUS: // 到这个类型之后就只会直接结束进入初始化状态了
+        case DfaState::STAR: // 到这个类型之后就只会直接结束进入初始化状态了
+        case DfaState::SLASH: // 到这个类型之后就只会直接结束进入初始化状态了
             $lastType = $type;
             $type = DfaState::Initial;
+            break;
+        case DfaState::Id_int1: // int 状态2
+            if (isAplha($ch) || isNumber($ch)) { // 是字母或数组就继续存下去
+                if ($ch == 'n') { // int 状态1
+                    $type = DfaState::Id_int2;
+                }
+                $value .= $ch;
+            } else { // 否则进入初始化状态
+                $lastType = $type;
+                $type = DfaState::Initial;
+            }
+            break;
+        case DfaState::Id_int2: // int 状态2
+            if (isAplha($ch) || isNumber($ch)) { // 是字母或数组就继续存下去
+                if ($ch == 't') { // int 状态2
+                    $type = DfaState::Id_int3;
+                }
+                $value .= $ch;
+            } else { // 否则进入初始化状态
+                $lastType = $type;
+                $type = DfaState::Initial;
+            }
+            break;
+        case DfaState::Id_int3: // int 状态3
+            var_dump('aaaaaaaaa');
+            if (isAplha($ch) || isNumber($ch)) { // 是字母或数组就继续存下去，并且把状态变成ID
+                $type = DfaState::ID;
+                $value .= $ch;
+            } else { // 否则进入初始化状态
+                $lastType = DfaState::INT;
+                $type = DfaState::Initial;
+            }
             break;
     }
     if ($type == DfaState::Initial) {
         if ($value) {
             // 如果 value 有值就存储一下
-            $token = new Token();
-            $token->type = $lastType;
-            $token->value = $value;
-            $tokenArr[] = $token;
-
+            $tokenArr = saveToken($tokenArr, $lastType, $value);
             $value = '';
         }
 
-
-        if (isAplha($ch)) {
+        if ($ch == 'i') { // int 状态1
+            $type = DfaState::Id_int1;
+            $value .= $ch;
+        } else if (isAplha($ch)) {
             $type = DfaState::ID;
             $value .= $ch;
         } else if (isNumber($ch)) {
@@ -107,18 +161,28 @@ foreach ($chars as $ch) {
         } else if (isGt($ch)) {
             $type = DfaState::GT;
             $value .= $ch;
+        } else if (isEq($ch)) {
+            $type = DfaState::EQ;
+            $value .= $ch;
+        } else if ($ch == '+') {
+            $type = DfaState::PLUS;
+            $value .= $ch;
+        } else if ($ch == '-') {
+            $type = DfaState::MINUS;
+            $value .= $ch;
+        } else if ($ch == '*') {
+            $type = DfaState::STAR;
+            $value .= $ch;
+        } else if ($ch == '/') {
+            $type = DfaState::SLASH;
+            $value .= $ch;
         }
     }
 }
-
+// 当结束循环之后 需要判定一下value是否有值，如果有就继续保存一下
 if ($value) {
     // 如果 value 有值就存储一下
-    $token = new Token();
-    $token->type = $type;
-    $token->value = $value;
-    $tokenArr[] = $token;
-
-    $value = '';
+    $tokenArr = saveToken($tokenArr, $type, $value);
 }
 
 
