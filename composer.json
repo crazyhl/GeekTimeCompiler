@@ -1,0 +1,15 @@
+{
+    "name": "crazyhl/geek-time-compiler",
+    "description": "极客时间 编译原理之美代码笔记",
+    "type": "project",
+    "authors": [
+        {
+            "name": "M1racle",
+            "email": "crazyhl@163.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {"M1racle\\": "src/"}
+    }
+}
